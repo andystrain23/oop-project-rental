@@ -1,0 +1,41 @@
+/*
+    --main-accent: #3A405A;
+    --light-accent: #6D98BA;
+    --cancel-accent: #ff6663;
+ */
+
+.root {
+    -fx-background-color: white;
+}
+
+#sidebar {
+    -fx-background-color: #efefef;
+}
+
+#sidebar-title {
+    -fx-font-size: 16pt;
+}
+
+#sidebar .button {
+    -fx-font-size: 14pt;
+    -fx-min-width: 200px;
+    -fx-font-weight: bold;
+}
+
+#active {
+    -fx-text-fill: #FFF;
+    -fx-background-color: #3A405A;
+}
+
+.grid-pane {
+    -fx-font-size: 14pt;
+    -fx-padding: 25px;
+}
+
+#home-grid .label {
+    -fx-padding: 0 0 10 0;
+}
+
+#title {
+    -fx-font-size: 20pt;
+}
