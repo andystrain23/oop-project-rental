@@ -17,21 +17,26 @@ import javafx.stage.StageStyle;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.sql.*;
 
 public class MainApp extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
+        // hard coding these details and the details
+        // themselves are terrible practice but I'm time constricted
+        String[] dbDetails = {"jdbc:mysql://localhost:3306/rentals?useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=BST", "root", "password"};
+
         //instantiate user in scope of both windows
         User user = new User();
 
         // BUILD MAIN WINDOW UI
-        initMainUI(primaryStage, user);
+        initMainUI(primaryStage, user, dbDetails);
 
         // LOGIN WINDOW
-        initLoginWindow(primaryStage, user);
+        initLoginWindow(primaryStage, user, dbDetails);
     }
 
-    public void initMainUI(Stage primaryStage, User user) {
+    public void initMainUI(Stage primaryStage, User user, String[] dbDetails) {
         //create border pane for layout
         BorderPane border = new BorderPane();
 
@@ -118,7 +123,7 @@ public class MainApp extends Application {
         primaryStage.show();
     }
 
-    public void initLoginWindow(Stage primaryStage, User user) {
+    public void initLoginWindow(Stage primaryStage, User user, String[] dbDetails) {
         Stage newWindow = new Stage();
 
         //specifies login window as modal
@@ -169,13 +174,51 @@ public class MainApp extends Application {
         Label lblPass = new Label("Password:");
         JFXTextField inputUser = new JFXTextField();
         JFXPasswordField inputPass = new JFXPasswordField();
+        Label wrongDetails = new Label("Your username or password is incorrect. \nPlease try again or see your administrator.");
+        wrongDetails.setId("password-notify");
+        wrongDetails.setVisible(false);
 
         login.setOnAction(event -> {
             //TODO: handle login
-            user.login(inputUser.getText(), inputPass.getText());
+            String inpUsername = inputUser.getText();
+            String inpPassword = inputPass.getText();
 
-            System.out.printf("Currently logged in user is %s.", user.getUsername());
-            newWindow.close();
+            Connection connection = null;
+            Statement statement;
+            try {
+                connection = DriverManager.getConnection(dbDetails[0], dbDetails[1], dbDetails[2]);
+                System.out.println("Connected!");
+                // TODO: construct statement here
+                String query = String.format("SELECT username, password, permissions FROM accounts WHERE username = '%s'", inpUsername);
+                statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(query);
+
+                // VERY BAD
+                if (resultSet.next()) {
+                    String dbPass = resultSet.getString("PASSWORD");
+                    int dbPerm = resultSet.getInt("PERMISSIONS");
+
+                    System.out.println(dbPass);
+                    System.out.println(dbPerm);
+
+                    if (dbPass.equals(inpPassword)) {
+                        user.login(inpUsername, dbPerm);
+                        newWindow.close();
+                    } else {
+                        wrongDetails.setVisible(true);
+                    }
+                }
+            } catch (SQLException sqlException) {
+                System.out.println(sqlException);
+            } finally {
+                if (connection != null) {
+                    try {
+                        connection.close();
+                    } catch (SQLException sqlException) {
+                        System.out.println(sqlException);
+                    }
+                }
+            }
         });
 
         //since the user doesn't want to log in they can't access the app, so close it
@@ -197,6 +240,7 @@ public class MainApp extends Application {
         loginLayout.add(inputUser, 2, 2);
         loginLayout.add(lblPass, 0, 3, 2, 1);
         loginLayout.add(inputPass, 2, 3);
+        loginLayout.add(wrongDetails, 0, 6, 3, 1);
 
         // create HBoxes for login, cancel and forgot buttons and add to grid
         HBox hBoxLogin = new HBox(10);

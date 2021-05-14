@@ -33,3 +33,8 @@
 #btnForgot {
     -fx-font-size: 11pt;
 }
+
+#password-notify {
+    -fx-font-size: 11pt;
+    -fx-text-fill: red;
+}

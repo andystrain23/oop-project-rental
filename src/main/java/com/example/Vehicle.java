@@ -9,5 +9,7 @@ public class Vehicle {
     private String colour;
     private float price;
 
+    Vehicle(/* database object? */) {
+    }
 
 }
