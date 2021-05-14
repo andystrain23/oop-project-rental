@@ -64,7 +64,7 @@ public class MainApp extends Application {
         sidebarTitle.setPadding(new Insets(15));
         leftVBox.getChildren().add(sidebarTitle);
 
-        ArrayList<String> buttonNames = new ArrayList<>(Arrays.asList("Home", "Rentals", "Manage Customers", "Manage Fleet", "Manage Users"));
+        ArrayList<String> buttonNames = new ArrayList<>(Arrays.asList("Home", "Rentals", "Manage Users"));
 
         ArrayList<JFXButton> buttons = new ArrayList<>();
         // add new buttons for all button names (for easy extension)
@@ -83,8 +83,7 @@ public class MainApp extends Application {
         //add 3 grid panes
         //1 = home
         //2 = manage rentals
-        //3 = manage fleet
-        //4 = manage users
+        //3 = manage users
         for (int i=0; i< buttons.size(); i++) {
             panes.add(new GridPane());
         }
@@ -100,9 +99,7 @@ public class MainApp extends Application {
 
         buildHome(panes.get(0));
         buildRentalsManage(panes.get(1));
-        buildCustomerManage(panes.get(2));
-        buildFleetManage(panes.get(3));
-        buildUserManage(panes.get(4), user);
+        buildUserManage(panes.get(2), user);
 
         border.setCenter(mainStackPane);
 
@@ -188,21 +185,23 @@ public class MainApp extends Application {
             try {
                 connection = DriverManager.getConnection(dbDetails[0], dbDetails[1], dbDetails[2]);
                 System.out.println("Connected!");
-                // TODO: construct statement here
-                String query = String.format("SELECT username, password, permissions FROM accounts WHERE username = '%s'", inpUsername);
+                // TODO: change after database change to add more user details
+                String query = String.format("SELECT password, permissions, created_date FROM accounts WHERE username = '%s'", inpUsername);
                 statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(query);
 
                 // VERY BAD
                 if (resultSet.next()) {
-                    String dbPass = resultSet.getString("PASSWORD");
-                    int dbPerm = resultSet.getInt("PERMISSIONS");
+                    String dbPass = resultSet.getString(1);
+                    int dbPerm = resultSet.getInt(2);
+                    Date dbCreation = resultSet.getDate(3);
 
                     System.out.println(dbPass);
                     System.out.println(dbPerm);
 
                     if (dbPass.equals(inpPassword)) {
-                        user.login(inpUsername, dbPerm);
+                        user.login(inpUsername, dbPerm, dbCreation);
+                        System.out.println(user.getUsername() + user.getCreationDate() + user.isAdmin());
                         newWindow.close();
                     } else {
                         wrongDetails.setVisible(true);
@@ -277,24 +276,6 @@ public class MainApp extends Application {
 
         gridPane.add(title, 0, 0);
         //TODO: do things
-    }
-
-    public void buildCustomerManage(GridPane gridPane) {
-        Label title = new Label("Customers");
-        title.setId("title");
-
-        gridPane.add(title, 0, 0);
-        //TODO: do things
-
-    }
-
-    public void buildFleetManage(GridPane gridPane) {
-        Label title = new Label("Manage Fleet");
-        title.setId("title");
-
-        gridPane.add(title, 0,0);
-        //TODO: do things
-        //TODO: add print function
     }
 
     public void buildUserManage(GridPane gridPane, User user) {
