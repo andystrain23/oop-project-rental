@@ -7,8 +7,8 @@ public class MainApp extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         // hard coding these details and the details
-        // themselves are terrible practice but I'm time constricted
-        String[] dbDetails = {"jdbc:mysql://localhost:3306/rentals?useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=BST", "root", "password"};
+        // themselves are terrible practice but I'm time constrained
+        String[] dbDetails = {"jdbc:mysql://localhost:3306/rentals?useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=BST&useSSL=false", "root", "password"};
 
         //instantiate user in scope of both windows
         User user = new User();

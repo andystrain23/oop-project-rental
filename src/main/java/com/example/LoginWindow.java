@@ -16,7 +16,8 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
-import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LoginWindow extends Window {
 
@@ -69,7 +70,7 @@ public class LoginWindow extends Window {
         Label title = new Label("Enter your details");
         title.setId("title");
         JFXButton login = new JFXButton("Login");
-        login.setId("btnLogin");
+        login.setId("btnSubmit");
         JFXButton cancel = new JFXButton("Cancel");
         cancel.setId("btnCancel");
         JFXButton forgot = new JFXButton("Forgot your password");
@@ -80,7 +81,7 @@ public class LoginWindow extends Window {
         Label lblPass = new Label("Password:");
         JFXTextField inputUser = new JFXTextField();
         JFXPasswordField inputPass = new JFXPasswordField();
-        Label wrongDetails = new Label("Your username or password is incorrect. \nPlease try again or see your administrator.");
+        Label wrongDetails = new Label("Your username or password is incorrect \nor your account isn't approved yet. \nPlease try again or see your administrator.");
         wrongDetails.setId("password-notify");
         wrongDetails.setVisible(false);
 
@@ -89,44 +90,11 @@ public class LoginWindow extends Window {
             String inpUsername = inputUser.getText();
             String inpPassword = inputPass.getText();
 
-            Connection connection = null;
-            Statement statement;
-            try {
-                connection = DriverManager.getConnection(dbDetails[0], dbDetails[1], dbDetails[2]);
-                System.out.println("Connected!");
-                // TODO: change after database change to add more user details
-                String query = String.format("SELECT password, permissions, created_date FROM accounts WHERE username = '%s'", inpUsername);
-                statement = connection.createStatement();
-                ResultSet resultSet = statement.executeQuery(query);
-
-                // VERY BAD
-                if (resultSet.next()) {
-                    String dbPass = resultSet.getString(1);
-                    int dbPerm = resultSet.getInt(2);
-                    Date dbCreation = resultSet.getDate(3);
-
-                    System.out.println(dbPass);
-                    System.out.println(dbPerm);
-
-                    if (dbPass.equals(inpPassword)) {
-                        user.login(inpUsername, dbPerm, dbCreation);
-                        System.out.println(user.getUsername() + user.getCreationDate() + user.isAdmin());
-                        newWindow.close();
-                    } else {
-                        wrongDetails.setVisible(true);
-                    }
-                }
-            } catch (SQLException sqlException) {
-                System.out.println(sqlException);
-            } finally {
-                if (connection != null) {
-                    try {
-                        connection.close();
-                    } catch (SQLException sqlException) {
-                        System.out.println(sqlException);
-                    }
-                }
-            }
+            if (user.login(dbDetails, inpUsername, inpPassword)) {
+                newWindow.close();
+            } else {
+                wrongDetails.setVisible(true);
+            };
         });
 
         //since the user doesn't want to log in they can't access the app, so close it
@@ -141,7 +109,7 @@ public class LoginWindow extends Window {
             dialog.show();
         });
 
-        register.setOnAction(event -> buildRegistration(newWindow));
+        register.setOnAction(event -> buildRegistration(newWindow, user, dbDetails));
 
         //add elements to the grid
         loginLayout.add(imageView, 0, 0, 3, 1);
@@ -176,20 +144,66 @@ public class LoginWindow extends Window {
         newWindow.show();
     }
 
-    private void buildRegistration(Stage newWindow) {
+    private void buildRegistration(Stage newWindow, User user, String[] dbDetails) {
         //build registration form
         Stage registrationWindow = new Stage();
 
         registrationWindow.initOwner(newWindow);
         registrationWindow.setTitle("Register");
 
-        StackPane registrationSP = new StackPane();
+        GridPane registrationGP = new GridPane();
+        registrationGP.setVgap(10);
+        registrationGP.setHgap(10);
+        registrationGP.setPadding(new Insets(10));
+        registrationGP.setAlignment(Pos.CENTER);
 
-        Scene registrationScene = new Scene(registrationSP);
+        Scene registrationScene = new Scene(registrationGP, 550, 400);
+        registrationScene.getStylesheets().add(getClass().getResource("login.css").toExternalForm());
         registrationWindow.setScene(registrationScene);
 
-        Label hello = new Label("Hello");
-        registrationSP.getChildren().add(hello);
+        Label title = new Label("Register User");
+        title.setId("title");
+        registrationGP.add(title, 0, 0);
+
+        Label lblUsername = new Label("Username");
+        Label lblPassword = new Label("Password");
+        JFXTextField tfUsername = new JFXTextField();
+        JFXPasswordField tfPassword = new JFXPasswordField();
+
+        HBox cancelBtn = new HBox();
+        cancelBtn.setAlignment(Pos.BOTTOM_LEFT);
+        JFXButton cancel = new JFXButton("Cancel");
+        cancel.setId("btnCancel");
+        cancelBtn.getChildren().add(cancel);
+
+        cancel.setOnAction(e -> registrationWindow.close());
+
+        HBox submitBtn = new HBox();
+        submitBtn.setAlignment(Pos.BOTTOM_RIGHT);
+        JFXButton submit = new JFXButton("Submit");
+        submit.setId("btnSubmit");
+        submitBtn.getChildren().add(submit);
+
+        Label submittedAcc = new Label("New account details submitted,\n please wait for approval.");
+        submittedAcc.setVisible(false);
+
+        submit.setOnAction(e -> {
+            List<String> details = new ArrayList<String>();
+            details.add(tfUsername.getText());
+            details.add(tfPassword.getText());
+
+            if (user.registerUser(details, dbDetails)) {
+                submittedAcc.setVisible(true);
+            };
+        });
+
+        registrationGP.add(lblUsername, 0, 1);
+        registrationGP.add(tfUsername, 1,1);
+        registrationGP.add(lblPassword, 0, 2);
+        registrationGP.add(tfPassword,1,2);
+        registrationGP.add(cancelBtn, 0, 3);
+        registrationGP.add(submitBtn, 1, 3);
+        registrationGP.add(submittedAcc, 0, 4, 2, 1);
 
         registrationWindow.show();
     }

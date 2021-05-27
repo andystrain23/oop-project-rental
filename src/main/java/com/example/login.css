@@ -16,9 +16,10 @@
 
 .button {
     -fx-text-fill: #3A405A;
+    -fx-min-width: 100px;
 }
 
-#btnLogin {
+#btnSubmit {
     -fx-text-fill: #FFF;
     -fx-background-color: #3A405A;
     -jfx-button-type: RAISED;

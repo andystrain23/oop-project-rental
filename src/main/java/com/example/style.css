@@ -39,3 +39,17 @@
 #title {
     -fx-font-size: 20pt;
 }
+
+.button {
+    -fx-text-fill: #3A405A;
+    -fx-font-size: 12pt;
+    -fx-border-insets: 10;
+}
+
+.list-view {
+    -fx-min-width: 300px;
+}
+
+#disclaimer {
+    -fx-text-fill: red;
+}
