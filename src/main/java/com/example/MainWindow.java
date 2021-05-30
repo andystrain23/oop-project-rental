@@ -7,14 +7,15 @@ import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.control.Separator;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class MainWindow extends Window {
 
@@ -88,7 +89,7 @@ public class MainWindow extends Window {
         panes.get(0).setVisible(true);
 
         buildHome(panes.get(0));
-        buildRentalsManage(panes.get(1));
+        buildRentalsManage(panes.get(1), dbDetails);
 
         border.setCenter(mainStackPane);
 
@@ -132,7 +133,7 @@ public class MainWindow extends Window {
         gridPane.add(info, 0, 1);
     }
 
-    private void buildRentalsManage(GridPane gridPane) {
+    private void buildRentalsManage(GridPane gridPane, String[] dbDetails) {
         Label title = new Label("Rentals");
         title.setId("title");
 
@@ -142,6 +143,42 @@ public class MainWindow extends Window {
 
         // table must include
         // numplate, make, type, model, mileage, price, available, start date, end date
+        TableView<Vehicle> tableView = new TableView<>();
+
+        TableColumn<Vehicle, String> numPlateCol = new TableColumn<>("Numplate");
+        numPlateCol.setCellValueFactory(new PropertyValueFactory<Vehicle, String>("numberPlate"));
+
+        TableColumn<Vehicle, String> typeCol = new TableColumn<>("Type");
+        typeCol.setCellValueFactory(new PropertyValueFactory<Vehicle, String>("type"));
+
+        TableColumn<Vehicle, String> makeCol = new TableColumn<>("Make");
+        makeCol.setCellValueFactory(new PropertyValueFactory<Vehicle, String>("make"));
+
+        TableColumn<Vehicle, String> modelCol = new TableColumn<>("Model");
+        modelCol.setCellValueFactory(new PropertyValueFactory<Vehicle, String>("model"));
+
+        TableColumn<Vehicle, Integer> mileageCol = new TableColumn<>("Mileage");
+        mileageCol.setCellValueFactory(new PropertyValueFactory<Vehicle, Integer>("mileage"));
+
+        TableColumn<Vehicle, Float> priceCol = new TableColumn<>("Price");
+        priceCol.setCellValueFactory(new PropertyValueFactory<Vehicle, Float>("price"));
+
+        TableColumn<Vehicle, String> availableCol = new TableColumn<>("Available");
+        availableCol.setCellValueFactory(new PropertyValueFactory<Vehicle, String>("available"));
+
+        TableColumn<Vehicle, Date> startCol = new TableColumn<>("Start Date");
+        startCol.setCellValueFactory(new PropertyValueFactory<Vehicle, Date>("rent_start"));
+
+        TableColumn<Vehicle, Date> endCol = new TableColumn<>("End Date");
+        endCol.setCellValueFactory(new PropertyValueFactory<Vehicle, Date>("rent_end"));
+
+        tableView.getColumns().addAll(numPlateCol, typeCol, makeCol, modelCol, mileageCol, priceCol, availableCol, startCol, endCol);
+
+        ObservableList<Vehicle> data = fetchVehicles(dbDetails);
+
+        tableView.setItems(data);
+
+        gridPane.add(tableView, 0, 1);
     }
 
     public void buildUserManage(GridPane gridPane, User user, String[] dbDetails) {
@@ -318,5 +355,52 @@ public class MainWindow extends Window {
         }
 
         return pendingAccs;
+    }
+
+    private ObservableList<Vehicle> fetchVehicles(String[] dbDetails) {
+        ObservableList<Vehicle> vehicles = FXCollections.observableArrayList();
+        Connection connection = null;
+        Statement statement;
+        String vehicleQuery = "SELECT * FROM vehicles;";
+
+        try {
+            connection = DriverManager.getConnection(dbDetails[0], dbDetails[1], dbDetails[2]);
+            statement = connection.createStatement();
+
+
+            ResultSet resultSet = statement.executeQuery(vehicleQuery);
+
+            while (resultSet.next()) {
+                boolean available = resultSet.getInt("available") == 1;
+
+                String numPlate = resultSet.getString("number_plate");
+                int type = resultSet.getInt("type");
+                int make = resultSet.getInt("make");
+                String model = resultSet.getString("model");
+                int mileage = resultSet.getInt("mileage");
+                float price = resultSet.getFloat("price");
+
+                if (available) {
+                    vehicles.add(new Vehicle(numPlate, type, make, model, mileage, price));
+                } else {
+                    Date start = resultSet.getDate("start");
+                    Date end = resultSet.getDate("end");
+
+                    vehicles.add(new Vehicle(numPlate, type, make, model, mileage, price, false, start, end));
+                }
+            }
+        } catch (SQLException sqlException) {
+            System.out.println(sqlException);
+            sqlException.printStackTrace();
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException sqlException) {
+                    System.out.println(sqlException);
+                }
+            }
+        }
+        return vehicles;
     }
 }
