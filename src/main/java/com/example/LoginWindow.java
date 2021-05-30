@@ -21,7 +21,7 @@ import java.util.List;
 
 public class LoginWindow extends Window {
 
-    public LoginWindow(int height, int width, String title) {
+    LoginWindow(int height, int width, String title) {
         this.setHeight(height);
         this.setWidth(width);
         this.setTitle(title);

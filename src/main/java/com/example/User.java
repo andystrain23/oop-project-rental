@@ -1,6 +1,5 @@
 package com.example;
 
-import javax.swing.plaf.nimbus.State;
 import java.sql.*;
 import java.util.List;
 
@@ -28,6 +27,7 @@ public class User {
                 String dbPass = resultSet.getString("PASSWORD");
                 // if supplied password not the same as stored password, reject login
                 if (!dbPass.equals(password)) return false;
+                // if account not yet approved
                 if (resultSet.getInt("APPROVED") == 2) return false;
 
                 this.username = resultSet.getString("USERNAME");

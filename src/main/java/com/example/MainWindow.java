@@ -19,7 +19,7 @@ import java.util.Arrays;
 public class MainWindow extends Window {
 
 
-    public MainWindow(int height, int width, String title) {
+    MainWindow(int height, int width, String title) {
         this.setHeight(height);
         this.setWidth(width);
         this.setTitle(title);
@@ -139,6 +139,9 @@ public class MainWindow extends Window {
         gridPane.add(title, 0, 0);
 
         //TODO: do things
+
+        // table must include
+        // numplate, make, type, model, mileage, price, available, start date, end date
     }
 
     public void buildUserManage(GridPane gridPane, User user, String[] dbDetails) {
@@ -146,7 +149,6 @@ public class MainWindow extends Window {
         title.setId("title");
 
         gridPane.add(title, 0,0);
-        //TODO: do things depending on connected user
 
         Label lblSubtitle = new Label("Current User:");
         Label lblName = new Label("Name");
@@ -195,6 +197,8 @@ public class MainWindow extends Window {
         updateHBox.setAlignment(Pos.BOTTOM_RIGHT);
         JFXButton btnUpdate = new JFXButton("Update");
         updateHBox.getChildren().add(btnUpdate);
+
+        //TODO: implement update functionality
 
         Label disclaimer = new Label("This software is proof of concept and does not implement proper security,\npasswords are stored in plain text. DO NOT USE REGULAR PASSWORDS.");
         disclaimer.setId("disclaimer");
@@ -252,7 +256,6 @@ public class MainWindow extends Window {
             });
 
             gridPane.add(adminHBox, 3, 1, 1, 10);
-            // button with approve or deny
         }
     }
 
