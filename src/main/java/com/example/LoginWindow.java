@@ -62,7 +62,7 @@ public class LoginWindow extends Window {
 
         //elements
         //load an image
-        Image image = new Image("com/example/car.png", 200, 200, true, false);
+        Image image = new Image("com/example/logo.png", 200, 200, true, false);
         //and put it into an imageview for display
         ImageView imageView = new ImageView();
         imageView.setImage(image);
@@ -86,7 +86,6 @@ public class LoginWindow extends Window {
         wrongDetails.setVisible(false);
 
         login.setOnAction(event -> {
-            //TODO: handle login
             String inpUsername = inputUser.getText();
             String inpPassword = inputPass.getText();
 

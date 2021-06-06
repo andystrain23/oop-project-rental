@@ -3,16 +3,24 @@ package com.example;
 import com.jfoenix.controls.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -85,11 +93,10 @@ public class MainWindow extends Window {
             pane.getStyleClass().add("grid-pane");
             mainStackPane.getChildren().add(pane);
         });
-        //TODO: remove when login logic added, move there
         panes.get(0).setVisible(true);
 
         buildHome(panes.get(0));
-        buildRentalsManage(panes.get(1), dbDetails);
+        buildRentalsManage(panes.get(1), dbDetails, primaryStage);
 
         border.setCenter(mainStackPane);
 
@@ -133,52 +140,235 @@ public class MainWindow extends Window {
         gridPane.add(info, 0, 1);
     }
 
-    private void buildRentalsManage(GridPane gridPane, String[] dbDetails) {
+    private void buildRentalsManage(GridPane gridPane, String[] dbDetails, Stage primaryStage) {
         Label title = new Label("Rentals");
         title.setId("title");
 
         gridPane.add(title, 0, 0);
 
-        //TODO: do things
-
         // table must include
-        // numplate, make, type, model, mileage, price, available, start date, end date
+        // numplate, make, type, model, mileage, price, available
         TableView<Vehicle> tableView = new TableView<>();
+        tableView.setMinWidth(1000);
+        tableView.setMinHeight(700);
+        tableView.setPadding(new Insets(10));
 
         TableColumn<Vehicle, String> numPlateCol = new TableColumn<>("Numplate");
-        numPlateCol.setCellValueFactory(new PropertyValueFactory<Vehicle, String>("numberPlate"));
+        numPlateCol.setCellValueFactory(new PropertyValueFactory<>("numberPlate"));
 
         TableColumn<Vehicle, String> typeCol = new TableColumn<>("Type");
-        typeCol.setCellValueFactory(new PropertyValueFactory<Vehicle, String>("type"));
+        typeCol.setCellValueFactory(new PropertyValueFactory<>("type"));
 
         TableColumn<Vehicle, String> makeCol = new TableColumn<>("Make");
-        makeCol.setCellValueFactory(new PropertyValueFactory<Vehicle, String>("make"));
+        makeCol.setCellValueFactory(new PropertyValueFactory<>("make"));
 
         TableColumn<Vehicle, String> modelCol = new TableColumn<>("Model");
-        modelCol.setCellValueFactory(new PropertyValueFactory<Vehicle, String>("model"));
+        modelCol.setCellValueFactory(new PropertyValueFactory<>("model"));
 
         TableColumn<Vehicle, Integer> mileageCol = new TableColumn<>("Mileage");
-        mileageCol.setCellValueFactory(new PropertyValueFactory<Vehicle, Integer>("mileage"));
+        mileageCol.setCellValueFactory(new PropertyValueFactory<>("mileage"));
 
         TableColumn<Vehicle, Float> priceCol = new TableColumn<>("Price");
-        priceCol.setCellValueFactory(new PropertyValueFactory<Vehicle, Float>("price"));
+        priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
 
         TableColumn<Vehicle, String> availableCol = new TableColumn<>("Available");
-        availableCol.setCellValueFactory(new PropertyValueFactory<Vehicle, String>("available"));
+        availableCol.setCellValueFactory(new PropertyValueFactory<>("available"));
 
-        TableColumn<Vehicle, Date> startCol = new TableColumn<>("Start Date");
-        startCol.setCellValueFactory(new PropertyValueFactory<Vehicle, Date>("rent_start"));
-
-        TableColumn<Vehicle, Date> endCol = new TableColumn<>("End Date");
-        endCol.setCellValueFactory(new PropertyValueFactory<Vehicle, Date>("rent_end"));
-
-        tableView.getColumns().addAll(numPlateCol, typeCol, makeCol, modelCol, mileageCol, priceCol, availableCol, startCol, endCol);
+        tableView.getColumns().addAll(numPlateCol, typeCol, makeCol, modelCol, mileageCol, priceCol, availableCol);
 
         ObservableList<Vehicle> data = fetchVehicles(dbDetails);
 
-        tableView.setItems(data);
+        // make new filtered list and initially show all entries
+        FilteredList<Vehicle> filteredData = new FilteredList<>(data, p -> true);
 
-        gridPane.add(tableView, 0, 1);
+        tableView.setItems(filteredData);
+
+        HBox hBoxView = new HBox();
+        hBoxView.setAlignment(Pos.BOTTOM_LEFT);
+        JFXButton btnView = new JFXButton("View");
+        hBoxView.getChildren().add(btnView);
+
+        String[] fields = {"Number Plate", "Type", "Make", "Model", "Mileage", "Price", "Available", "Start", "End"};
+
+        btnView.setOnAction(e -> {
+            int selectedIndex = tableView.getSelectionModel().getSelectedIndex();
+
+            Vehicle selectedVehicle = data.get(selectedIndex);
+            String[] vehicleProps = selectedVehicle.getAllProperties();
+
+            Stage viewWindow = new Stage();
+            viewWindow.initOwner(primaryStage);
+            viewWindow.initModality(Modality.WINDOW_MODAL);
+
+            VBox viewWindowVBox = new VBox();
+            viewWindowVBox.setAlignment(Pos.CENTER);
+            Scene viewWindowScene = new Scene(viewWindowVBox, 500, 500);
+            viewWindow.setScene(viewWindowScene);
+
+            Label viewTitle = new Label("View");
+            viewTitle.setStyle("-fx-font-size: 20pt;");
+
+            ImageView imageView = new ImageView();
+            Image image;
+            switch (selectedVehicle.getType()) {
+                case "bike":
+                    image = new Image("com/example/bike.jpg", 200, 200, true, false);
+                    break;
+                case "car":
+                    image = new Image("com/example/car.jpg", 200, 200, true, false);
+                    break;
+                case "van":
+                    image = new Image("com/example/van.png", 200, 200, true, false);
+                    break;
+                case "truck":
+                    image = new Image("com/example/truck.jpg", 200, 200, true, false);
+                    break;
+                default:
+                    image = new Image("com/example/logo.png", 200, 200, true, false);
+                    break;
+            }
+            imageView.setImage(image);
+
+            List<Label> viewLabels = new ArrayList<>();
+
+            for (int i = 0; i < fields.length; i++) {
+                viewLabels.add(new Label(fields[i] + ": " + vehicleProps[i]));
+            }
+
+            JFXButton print = new JFXButton("Print");
+
+            print.setOnAction(event -> {
+                try {
+                    File file = new File("info.txt");
+                    if (file.createNewFile()) {
+                        writeToFile(file, vehicleProps, fields);
+                    } else if (file.delete()) {
+                        try {
+                            file.createNewFile();
+                        } catch (IOException ioException) {
+                            System.out.println(ioException);
+                        }
+                        writeToFile(file, vehicleProps, fields);
+                    }
+                } catch (IOException ioException) {
+                    System.out.println("An error occurred:" + ioException);
+                }
+            });
+
+            viewWindowVBox.getChildren().add(viewTitle);
+            viewWindowVBox.getChildren().add(imageView);
+            viewLabels.forEach(viewLabel -> viewWindowVBox.getChildren().add(viewLabel));
+
+            HBox printHBox = new HBox();
+            printHBox.setAlignment(Pos.BOTTOM_CENTER);
+            printHBox.setPadding(new Insets(10));
+            printHBox.getChildren().add(print);
+            viewWindowVBox.getChildren().add(printHBox);
+
+            viewWindow.show();
+        });
+
+
+
+        HBox hBoxLoan = new HBox();
+        hBoxLoan.setAlignment(Pos.BOTTOM_RIGHT);
+
+        JFXTextField filterData = new JFXTextField();
+        filterData.setLabelFloat(true);
+        filterData.setPromptText("Filter text");
+        //add listener to text box to look for change
+        filterData.textProperty().addListener((observable, oldValue, newValue) -> {
+            //when text box changes, set new filter criteria
+            filteredData.setPredicate(vehicle -> {
+                //if text box is empty, include everything
+                if (newValue == null || newValue.isEmpty()) {
+                    return true;
+                }
+
+                //convert to lower for comparison
+                String lowerCase = newValue.toLowerCase();
+
+                //compare input to number plate, type, make and model fields and return matches
+                if (vehicle.getNumberPlate().toLowerCase().contains(lowerCase)) {
+                    return true;
+                } else if (vehicle.getType().toLowerCase().contains(lowerCase)) {
+                    return true;
+                } else if (vehicle.getMake().toLowerCase().contains(lowerCase)) {
+                    return true;
+                } else if (vehicle.getModel().toLowerCase().contains(lowerCase)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            });
+        });
+        hBoxLoan.getChildren().add(filterData);
+        JFXButton btnReturn = new JFXButton("Return");
+        hBoxLoan.getChildren().add(btnReturn);
+        btnReturn.setOnAction(e -> {
+            int selectedIndex = tableView.getSelectionModel().getSelectedIndex();
+
+            Vehicle selectedVehicle = data.get(selectedIndex);
+
+            Alert alert = new Alert(
+                    Alert.AlertType.CONFIRMATION,
+                    "Return " + selectedVehicle.getMake() + " " + selectedVehicle.getModel()+ "? Num plate: " + selectedVehicle.getNumberPlate(),
+                    ButtonType.YES, ButtonType.NO);
+            alert.showAndWait();
+
+            if (alert.getResult() == ButtonType.YES) {
+                selectedVehicle.returnVehicle(dbDetails);
+            }
+        });
+
+        JFXButton btnLoan = new JFXButton("Loan");
+        hBoxLoan.getChildren().add(btnLoan);
+        btnLoan.setOnAction(e -> {
+            int selectedIndex = tableView.getSelectionModel().getSelectedIndex();
+
+            Vehicle selectedVehicle = data.get(selectedIndex);
+
+            Stage loanWindow = new Stage();
+            loanWindow.initOwner(primaryStage);
+            loanWindow.initModality(Modality.WINDOW_MODAL);
+
+            GridPane loanGP = new GridPane();
+            loanGP.setAlignment(Pos.CENTER);
+            Scene loanWindowScene = new Scene(loanGP, 500, 500);
+            loanWindow.setScene(loanWindowScene);
+            try {
+                loanWindowScene.getStylesheets().add(this.getClass().getResource("style.css").toExternalForm());
+            } catch (NullPointerException nullPointerException) {
+                System.out.println(nullPointerException);
+            }
+
+            Label loanTitle = new Label("Loan Vehicle");
+            loanGP.add(loanTitle, 0,0,2,1);
+
+            Label start = new Label("Start date:");
+            DatePicker startPicker = new DatePicker(LocalDate.now());
+            Label end = new Label("End");
+            DatePicker endPicker = new DatePicker(LocalDate.now());
+            JFXButton submit = new JFXButton("Submit");
+            submit.setOnAction(event -> {
+                LocalDate pickedStart = startPicker.getValue();
+                LocalDate pickedEnd = endPicker.getValue();
+
+                selectedVehicle.loanVehicle(dbDetails, pickedStart, pickedEnd);
+                loanWindow.close();
+            });
+
+            loanGP.addColumn(0, start, end);
+            loanGP.addColumn(1, startPicker, endPicker);
+            loanGP.add(submit, 0, 3, 2, 1);
+
+            loanWindow.show();
+        });
+
+        gridPane.add(hBoxView, 0, 2);
+        gridPane.add(hBoxLoan, 1, 2);
+
+        gridPane.add(tableView, 0, 1, 2, 1);
     }
 
     public void buildUserManage(GridPane gridPane, User user, String[] dbDetails) {
@@ -229,18 +419,16 @@ public class MainWindow extends Window {
         gridPane.add(inpEmail, 1, 6);
         gridPane.add(createdDate, 1, 7);
 
-        HBox updateHBox = new HBox();
-        updateHBox.setPadding(new Insets(10, 0, 10, 0));
-        updateHBox.setAlignment(Pos.BOTTOM_RIGHT);
-        JFXButton btnUpdate = new JFXButton("Update");
-        updateHBox.getChildren().add(btnUpdate);
-
-        //TODO: implement update functionality
+//        HBox updateHBox = new HBox();
+//        updateHBox.setPadding(new Insets(10, 0, 10, 0));
+//        updateHBox.setAlignment(Pos.BOTTOM_RIGHT);
+//        JFXButton btnUpdate = new JFXButton("Update");
+//        updateHBox.getChildren().add(btnUpdate);
 
         Label disclaimer = new Label("This software is proof of concept and does not implement proper security,\npasswords are stored in plain text. DO NOT USE REGULAR PASSWORDS.");
         disclaimer.setId("disclaimer");
 
-        gridPane.add(updateHBox, 1,8);
+//        gridPane.add(updateHBox, 1,8);
         gridPane.add(disclaimer, 0, 10, 2, 1);
 
 
@@ -402,5 +590,21 @@ public class MainWindow extends Window {
             }
         }
         return vehicles;
+    }
+
+    private void writeToFile(File file, String[] vehicleProps, String[] fields) {
+        try {
+            FileWriter fileWriter = new FileWriter(file);
+            fileWriter.write("Vehicle:\n\n");
+
+            for (int i = 0; i < fields.length; i++) {
+                String constructor = fields[i] + ": " + vehicleProps[i] + "\n";
+                fileWriter.write(constructor);
+            }
+            fileWriter.close();
+        } catch (IOException ioException) {
+            System.out.println(ioException);
+        }
+
     }
 }
