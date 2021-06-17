@@ -44,11 +44,7 @@ public class MainWindow extends Window {
         primaryStage.setScene(scene);
 
         //set stylesheet for main window
-        try {
-            scene.getStylesheets().add(this.getClass().getResource("style.css").toExternalForm());
-        } catch (NullPointerException e) {
-            System.out.println(e);
-        }
+        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
         primaryStage.setTitle("UoWRentals");
 
         //left pane
@@ -419,16 +415,9 @@ public class MainWindow extends Window {
         gridPane.add(inpEmail, 1, 6);
         gridPane.add(createdDate, 1, 7);
 
-//        HBox updateHBox = new HBox();
-//        updateHBox.setPadding(new Insets(10, 0, 10, 0));
-//        updateHBox.setAlignment(Pos.BOTTOM_RIGHT);
-//        JFXButton btnUpdate = new JFXButton("Update");
-//        updateHBox.getChildren().add(btnUpdate);
-
         Label disclaimer = new Label("This software is proof of concept and does not implement proper security,\npasswords are stored in plain text. DO NOT USE REGULAR PASSWORDS.");
         disclaimer.setId("disclaimer");
 
-//        gridPane.add(updateHBox, 1,8);
         gridPane.add(disclaimer, 0, 10, 2, 1);
 
 

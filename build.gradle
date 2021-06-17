@@ -30,10 +30,10 @@ javafx {
 sourceSets {
     main {
         resources {
-            srcDirs = ["src/main/java"]
+            srcDirs = ["src/main/java", "src/main/resources"]
             includes = ["**/*.css","**/*.png","**/*.jpg"]
         }
     }
 }
 
-mainClassName = "com.example.MainApp"
+mainClassName = "com.example.Main"

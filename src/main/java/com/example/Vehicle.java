@@ -20,6 +20,8 @@ public class Vehicle {
 
     Vehicle(String numberPlate, int type, int make, String model, int mileage, float price) {
         this.numberPlate = new SimpleStringProperty(numberPlate);
+
+        // this should be determined by a database call instead
         switch (type - 1) {
             case 0:
                 this.type = new SimpleStringProperty("bike");
@@ -34,6 +36,7 @@ public class Vehicle {
                 this.type = new SimpleStringProperty("truck");
         }
 
+        // this should be determined by a database call instead
         switch (make - 1) {
             case 0:
                 this.make = new SimpleStringProperty("VW");
@@ -68,6 +71,7 @@ public class Vehicle {
 
     Vehicle(String numberPlate, int type, int make, String model, int mileage, float price, boolean available, Date rent_start, Date rent_end) {
         this.numberPlate = new SimpleStringProperty(numberPlate);
+        // this should be determined by a database call instead
         switch (type) {
             case 0:
                 this.type = new SimpleStringProperty("bike");
@@ -83,6 +87,7 @@ public class Vehicle {
                 break;
         }
 
+        // this should be determined by a database call instead
         switch (make) {
             case 0:
                 this.type = new SimpleStringProperty("VW");

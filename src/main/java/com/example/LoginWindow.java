@@ -62,10 +62,12 @@ public class LoginWindow extends Window {
 
         //elements
         //load an image
+        ImageView imageView = new ImageView();
         Image image = new Image("com/example/logo.png", 200, 200, true, false);
         //and put it into an imageview for display
-        ImageView imageView = new ImageView();
         imageView.setImage(image);
+
+
 
         Label title = new Label("Enter your details");
         title.setId("title");
